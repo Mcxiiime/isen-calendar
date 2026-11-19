@@ -20,9 +20,13 @@ with sync_playwright() as p:
     page.click("button[type='submit'], input[type='submit']")
     page.wait_for_load_state("networkidle")
 
-    # Force le clic sur "Mon planning (apprenant)" même s'il est dans un sous-menu replié
-    page.locator("span.ui-menuitem-text", has_text="Mon planning").first.evaluate("el => el.closest('a').click()")
-    page.wait_for_selector(".fc-view")
+    # Force le clic sur "Mon planning" via JavaScript même s'il est replié dans le menu
+    page.evaluate("""() => {
+        const items = Array.from(document.querySelectorAll('span.ui-menuitem-text'));
+        const target = items.find(el => el.textContent.includes('Mon planning'));
+        if (target && target.closest('a')) target.closest('a').click();
+    }""")
+    page.wait_for_selector(".fc-view", timeout=30000)
     page.wait_for_timeout(2000)
 
     # Récupère les événements sur 12 semaines en cliquant sur "Suivant"
